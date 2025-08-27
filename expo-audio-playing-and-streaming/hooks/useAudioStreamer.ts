@@ -1,19 +1,22 @@
-import { View, Text, Button, Alert } from "react-native";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { requestRecordingPermissionsAsync } from "expo-audio";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert } from "react-native";
 import {
+  AudioContext,
   AudioRecorder,
   RecorderAdapterNode,
-  AudioContext,
+  AudioBuffer,
 } from "react-native-audio-api";
-import { requestRecordingPermissionsAsync } from "expo-audio";
 
 const useAudioStreamer = ({
   sampleRate,
   interval,
+  onAudioReady,
 }: {
   // assuming that the sample rate will not change
   sampleRate: number;
   interval: number;
+  onAudioReady: (buffer: AudioBuffer) => void;
 }) => {
   const recorderRef = useRef<AudioRecorder | null>(null);
   const adapterRef = useRef<RecorderAdapterNode | null>(null);
@@ -55,7 +58,8 @@ const useAudioStreamer = ({
       // Create recorder
       recorderRef.current = new AudioRecorder({
         sampleRate: sampleRate,
-        bufferLengthInSamples: (sampleRate * interval) / 1000,
+        //bufferLengthInSamples: (sampleRate * interval) / 1000,
+        bufferLengthInSamples: sampleRate,
       });
 
       // Create adapter
@@ -76,6 +80,7 @@ const useAudioStreamer = ({
           "When:",
           when
         );
+        onAudioReady(buffer);
       });
 
       setIsInitialized(true);
@@ -84,7 +89,7 @@ const useAudioStreamer = ({
       console.error("Failed to initialize audio:", error);
       Alert.alert("Error", "Failed to initialize audio recorder");
     }
-  }, [sampleRate]);
+  }, [interval, onAudioReady, sampleRate]);
 
   const startRecording = useCallback(() => {
     try {
