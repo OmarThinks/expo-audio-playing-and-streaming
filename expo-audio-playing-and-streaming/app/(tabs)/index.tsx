@@ -1,8 +1,8 @@
 import { dummyBase64Text } from "@/samples/dummyBase64Text";
 import { useAudioPlayer } from "@/modules/audio-player";
-import React from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Button, StyleSheet, Text, View } from "react-native";
-import { AudioContext } from "react-native-audio-api";
+import { AudioContext, AudioBufferSourceNode } from "react-native-audio-api";
 
 function TestAudioPlayerModule() {
   const { playAudio, stopPlayingAudio, isAudioPlaying } = useAudioPlayer({

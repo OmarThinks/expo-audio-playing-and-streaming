@@ -1,110 +1,92 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { dummyBase64Text } from "@/samples/dummyBase64Text";
+import React, { useCallback, useRef, useState } from "react";
+import { Button, StyleSheet, Text, View } from "react-native";
+import { AudioBufferSourceNode, AudioContext } from "react-native-audio-api";
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+const useBase64AudioPlayer = () => {
+  const playerNodeRef = useRef<AudioBufferSourceNode | null>(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+
+  const playAudio = useCallback(
+    ({
+      base64Text,
+      sampleRate,
+    }: {
+      base64Text: string;
+      sampleRate: number;
+    }) => {
+      const audioContext = new AudioContext();
+
+      // Convert base64 to raw PCM data
+      const arrayBuffer = base64AudioTextToArrayBuffer(base64Text);
+      const pcmData = new Int16Array(arrayBuffer);
+
+      // Create audio buffer with the specified sample rate
+      const audioBuffer = audioContext.createBuffer(
+        1,
+        pcmData.length,
+        sampleRate
+      );
+      const channelData = audioBuffer.getChannelData(0);
+
+      // Convert Int16 PCM data to Float32 for Web Audio API
+      for (let i = 0; i < pcmData.length; i++) {
+        channelData[i] = pcmData[i] / 32768.0; // Normalize 16-bit to -1.0 to 1.0
+      }
+
+      const playerNode = audioContext.createBufferSource();
+      playerNode.buffer = audioBuffer;
+
+      playerNode.connect(audioContext.destination);
+      setIsAudioPlaying(true);
+      playerNode.start(audioContext.currentTime);
+      playerNode.stop(audioContext.currentTime + audioBuffer.duration);
+      playerNode.onEnded = () => {
+        playerNodeRef.current = null;
+        console.log("ended");
+        setIsAudioPlaying(false);
+      };
+      playerNodeRef.current = playerNode;
+    },
+    []
+  );
+
+  const stopPlayingAudio = useCallback(() => {
+    playerNodeRef.current?.stop?.();
+    playerNodeRef.current = null;
+  }, []);
+
+  return { playAudio, isAudioPlaying, stopPlayingAudio };
+};
 
 export default function TabTwoScreen() {
+  const { isAudioPlaying, playAudio, stopPlayingAudio } =
+    useBase64AudioPlayer();
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
+    <View style={{ alignSelf: "stretch", flex: 1, padding: 16 }}>
+      <Text>Is Playing: {`${isAudioPlaying}`}</Text>
+
+      {!isAudioPlaying ? (
+        <Button
+          title="Play Audio"
+          onPress={() => {
+            playAudio({ base64Text: dummyBase64Text, sampleRate: 16000 });
+          }}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+      ) : (
+        <Button title="Stop Playing Audio" onPress={stopPlayingAudio} />
+      )}
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
+function base64AudioTextToArrayBuffer(base64: string) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
