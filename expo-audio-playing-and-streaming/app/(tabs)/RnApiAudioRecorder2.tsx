@@ -34,6 +34,13 @@ const RnApiAudioRecorder = () => {
   const { isRecording, startRecording, stopRecording, isInitialized } =
     useAudioStreamer({ sampleRate: 16000, interval: 250, onAudioReady });
 
+  const _startRecording = () => {
+    if (isInitialized) {
+      setMessages([]);
+      startRecording();
+    }
+  };
+
   const { playAudio } = useBase64AudioPlayer();
 
   return (
@@ -47,7 +54,7 @@ const RnApiAudioRecorder = () => {
       </Text>
       <Button
         title={isRecording ? "Stop Recording" : "Start Recording"}
-        onPress={isRecording ? stopRecording : startRecording}
+        onPress={isRecording ? stopRecording : _startRecording}
         disabled={!isInitialized}
       />
 

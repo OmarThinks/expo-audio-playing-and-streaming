@@ -58,8 +58,8 @@ const useAudioStreamer = ({
       // Create recorder
       recorderRef.current = new AudioRecorder({
         sampleRate: sampleRate,
-        //bufferLengthInSamples: (sampleRate * interval) / 1000,
-        bufferLengthInSamples: sampleRate,
+        bufferLengthInSamples: (sampleRate * interval) / 1000,
+        //bufferLengthInSamples: sampleRate,
       });
 
       // Create adapter
