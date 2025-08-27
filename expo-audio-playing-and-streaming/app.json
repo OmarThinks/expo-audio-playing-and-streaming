@@ -54,9 +54,13 @@
             "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
           ],
           "androidForegroundService": true,
-          "androidFSTypes": [
-            "mediaPlayback"
-          ]
+          "androidFSTypes": ["mediaPlayback"]
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
         }
       ]
     ],
