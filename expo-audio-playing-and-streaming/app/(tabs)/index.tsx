@@ -2,6 +2,7 @@ import { dummyBase64Text } from "@/samples/dummyBase64Text";
 import { useAudioPlayer } from "@/modules/audio-player";
 import React from "react";
 import { Button, StyleSheet, Text, View } from "react-native";
+import { AudioContext } from "react-native-audio-api";
 
 function TestAudioPlayerModule() {
   const { playAudio, stopPlayingAudio, isAudioPlaying } = useAudioPlayer({
@@ -22,6 +23,27 @@ function TestAudioPlayerModule() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Audio Player Test</Text>
+
+      <Button
+        title="Original example"
+        onPress={async () => {
+          const audioContext = new AudioContext();
+
+          const audioBuffer = await fetch(
+            "https://software-mansion.github.io/react-native-audio-api/audio/music/example-music-01.mp3"
+          )
+            .then((response) => response.arrayBuffer())
+            .then((arrayBuffer) => audioContext.decodeAudioData(arrayBuffer));
+          console.log(audioBuffer);
+
+          const playerNode = audioContext.createBufferSource();
+          playerNode.buffer = audioBuffer;
+
+          playerNode.connect(audioContext.destination);
+          playerNode.start(audioContext.currentTime);
+          playerNode.stop(audioContext.currentTime + 10);
+        }}
+      />
 
       <View style={styles.buttonContainer}>
         <Button
