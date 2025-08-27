@@ -1,6 +1,6 @@
 import { dummyBase64Text } from "@/samples/dummyBase64Text";
 import React, { useCallback, useRef, useState } from "react";
-import { Button, StyleSheet, Text, View } from "react-native";
+import { Button, Text, View } from "react-native";
 import { AudioBufferSourceNode, AudioContext } from "react-native-audio-api";
 
 const useBase64AudioPlayer = () => {
@@ -59,7 +59,17 @@ const useBase64AudioPlayer = () => {
   return { playAudio, isAudioPlaying, stopPlayingAudio };
 };
 
-export default function TabTwoScreen() {
+function base64AudioTextToArrayBuffer(base64: string) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+function Example() {
   const { isAudioPlaying, playAudio, stopPlayingAudio } =
     useBase64AudioPlayer();
 
@@ -81,12 +91,5 @@ export default function TabTwoScreen() {
   );
 }
 
-function base64AudioTextToArrayBuffer(base64: string) {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
+export default Example;
+export { base64AudioTextToArrayBuffer, useBase64AudioPlayer };

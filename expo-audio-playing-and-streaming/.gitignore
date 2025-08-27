@@ -39,4 +39,5 @@ yarn-error.*
 app-example
 
 
-android
+/android
+modules/audio-streamer/android/build

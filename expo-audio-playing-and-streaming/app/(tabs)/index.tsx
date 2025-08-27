@@ -1,145 +1,62 @@
 import { dummyBase64Text } from "@/samples/dummyBase64Text";
-import { useAudioPlayer } from "@/modules/audio-player";
 import React, { useCallback, useRef, useState } from "react";
-import { Button, StyleSheet, Text, View } from "react-native";
-import { AudioContext, AudioBufferSourceNode } from "react-native-audio-api";
+import { Button, Text, View } from "react-native";
+import { AudioBufferSourceNode, AudioContext } from "react-native-audio-api";
 
-function TestAudioPlayerModule() {
-  const { playAudio, stopPlayingAudio, isAudioPlaying } = useAudioPlayer({
-    onAudioStartsPlaying: () => {
-      console.log("Audio started playing");
-      //Alert.alert("Audio Started", "Audio playback has started");
+const useBase64AudioPlayer = () => {
+  const playerNodeRef = useRef<AudioBufferSourceNode | null>(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+
+  const playAudio = useCallback(
+    ({
+      base64Text,
+      sampleRate,
+    }: {
+      base64Text: string;
+      sampleRate: number;
+    }) => {
+      const audioContext = new AudioContext();
+
+      // Convert base64 to raw PCM data
+      const arrayBuffer = base64AudioTextToArrayBuffer(base64Text);
+      const pcmData = new Int16Array(arrayBuffer);
+
+      // Create audio buffer with the specified sample rate
+      const audioBuffer = audioContext.createBuffer(
+        1,
+        pcmData.length,
+        sampleRate
+      );
+      const channelData = audioBuffer.getChannelData(0);
+
+      // Convert Int16 PCM data to Float32 for Web Audio API
+      for (let i = 0; i < pcmData.length; i++) {
+        channelData[i] = pcmData[i] / 32768.0; // Normalize 16-bit to -1.0 to 1.0
+      }
+
+      const playerNode = audioContext.createBufferSource();
+      playerNode.buffer = audioBuffer;
+
+      playerNode.connect(audioContext.destination);
+      setIsAudioPlaying(true);
+      playerNode.start(audioContext.currentTime);
+      playerNode.stop(audioContext.currentTime + audioBuffer.duration);
+      playerNode.onEnded = () => {
+        playerNodeRef.current = null;
+        console.log("ended");
+        setIsAudioPlaying(false);
+      };
+      playerNodeRef.current = playerNode;
     },
-    onAudioStopsPlaying: () => {
-      console.log("Audio stopped playing");
-      //Alert.alert("Audio Stopped", "Audio playback has stopped");
-    },
-  });
-
-  const handleStopAudio = () => {
-    stopPlayingAudio();
-  };
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Audio Player Test</Text>
-
-      <Button
-        title="Original example"
-        onPress={async () => {
-          const audioContext = new AudioContext();
-
-          const audioBuffer = await fetch(
-            "https://software-mansion.github.io/react-native-audio-api/audio/music/example-music-01.mp3"
-          )
-            .then((response) => response.arrayBuffer())
-            .then((arrayBuffer) => audioContext.decodeAudioData(arrayBuffer));
-          console.log(audioBuffer);
-
-          const playerNode = audioContext.createBufferSource();
-          playerNode.buffer = audioBuffer;
-
-          playerNode.connect(audioContext.destination);
-          playerNode.start(audioContext.currentTime);
-          playerNode.stop(audioContext.currentTime + 10);
-        }}
-      />
-
-      <Button
-        title="Play dummy audio with rn-audio-api"
-        onPress={() => {
-          playBase64AudioText(dummyBase64Text, 16000);
-        }}
-      />
-
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Play Dummy base64 Audio"
-          onPress={() => {
-            playAudio({
-              base64Text: dummyBase64Text,
-              sampleRate: 16000,
-            });
-          }}
-          disabled={isAudioPlaying}
-        />
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Stop Audio"
-          onPress={handleStopAudio}
-          disabled={!isAudioPlaying}
-        />
-      </View>
-
-      <Text style={styles.statusText}>
-        Status: {isAudioPlaying ? "Playing" : "Stopped"}
-      </Text>
-
-      <Text style={styles.note}>
-        Note: This test uses a sample empty WAV file. Replace
-        SAMPLE_BASE64_AUDIO with your actual base64 audio data.
-      </Text>
-    </View>
+    []
   );
-}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    backgroundColor: "#f5f5f5",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 30,
-    color: "#333",
-  },
-  buttonContainer: {
-    marginVertical: 10,
-    width: "80%",
-  },
-  statusText: {
-    fontSize: 18,
-    marginTop: 20,
-    fontWeight: "600",
-    color: "#007AFF",
-  },
-  note: {
-    fontSize: 12,
-    color: "#666",
-    textAlign: "center",
-    marginTop: 30,
-    fontStyle: "italic",
-  },
-});
+  const stopPlayingAudio = useCallback(() => {
+    playerNodeRef.current?.stop?.();
+    playerNodeRef.current = null;
+  }, []);
 
-const playBase64AudioText = async (base64: string, sampleRate: number) => {
-  const audioContext = new AudioContext();
-
-  // Convert base64 to raw PCM data
-  const arrayBuffer = base64AudioTextToArrayBuffer(base64);
-  const pcmData = new Int16Array(arrayBuffer);
-
-  // Create audio buffer with the specified sample rate
-  const audioBuffer = audioContext.createBuffer(1, pcmData.length, sampleRate);
-  const channelData = audioBuffer.getChannelData(0);
-
-  // Convert Int16 PCM data to Float32 for Web Audio API
-  for (let i = 0; i < pcmData.length; i++) {
-    channelData[i] = pcmData[i] / 32768.0; // Normalize 16-bit to -1.0 to 1.0
-  }
-
-  const playerNode = audioContext.createBufferSource();
-  playerNode.buffer = audioBuffer;
-
-  playerNode.connect(audioContext.destination);
-  playerNode.start(audioContext.currentTime);
-  playerNode.stop(audioContext.currentTime + audioBuffer.duration);
+  return { playAudio, isAudioPlaying, stopPlayingAudio };
 };
 
 function base64AudioTextToArrayBuffer(base64: string) {
@@ -152,4 +69,27 @@ function base64AudioTextToArrayBuffer(base64: string) {
   return bytes.buffer;
 }
 
-export default TestAudioPlayerModule;
+function Example() {
+  const { isAudioPlaying, playAudio, stopPlayingAudio } =
+    useBase64AudioPlayer();
+
+  return (
+    <View style={{ alignSelf: "stretch", flex: 1, padding: 16 }}>
+      <Text>Is Playing: {`${isAudioPlaying}`}</Text>
+
+      {!isAudioPlaying ? (
+        <Button
+          title="Play Audio"
+          onPress={() => {
+            playAudio({ base64Text: dummyBase64Text, sampleRate: 16000 });
+          }}
+        />
+      ) : (
+        <Button title="Stop Playing Audio" onPress={stopPlayingAudio} />
+      )}
+    </View>
+  );
+}
+
+export default Example;
+export { base64AudioTextToArrayBuffer, useBase64AudioPlayer };
