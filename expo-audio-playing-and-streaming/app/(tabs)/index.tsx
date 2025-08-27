@@ -83,7 +83,9 @@ function Example() {
         gap: 16,
       }}
     >
-      <Text>Is Playing: {`${isAudioPlaying}`}</Text>
+      <Text style={{ fontSize: 32, fontWeight: "semibold" }}>
+        Is Playing: {`${isAudioPlaying}`}
+      </Text>
 
       {!isAudioPlaying ? (
         <Button
