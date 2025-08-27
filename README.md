@@ -13,3 +13,7 @@
 # Credits:
 
 - The native module of audio streaming is created by Claude Sonnet using GitHub Copilot AI Agent. And I've tested on android.
+
+# Related:
+
+https://github.com/software-mansion/react-native-audio-api/issues/626
