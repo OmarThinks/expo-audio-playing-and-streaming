@@ -43,7 +43,6 @@ const useBase64AudioPlayer = () => {
       playerNode.stop(audioContext.currentTime + audioBuffer.duration);
       playerNode.onEnded = () => {
         playerNodeRef.current = null;
-        console.log("ended");
         setIsAudioPlaying(false);
       };
       playerNodeRef.current = playerNode;
@@ -74,7 +73,16 @@ function Example() {
     useBase64AudioPlayer();
 
   return (
-    <View style={{ alignSelf: "stretch", flex: 1, padding: 16 }}>
+    <View
+      style={{
+        alignSelf: "stretch",
+        flex: 1,
+        padding: 16,
+        justifyContent: "center",
+        alignItems: "stretch",
+        gap: 16,
+      }}
+    >
       <Text>Is Playing: {`${isAudioPlaying}`}</Text>
 
       {!isAudioPlaying ? (

@@ -8,7 +8,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "clean": "rm -r node_modules android package-lock.json .expo modules/audio-streamer/android/build modules/audio-player/android/build",
+    "clean": "rm -r node_modules android package-lock.json .expo modules/audio-streamer/android/build",
     "prebuild": "npm i && npx expo prebuild --platform android",
     "android": "expo run:android"
   },
