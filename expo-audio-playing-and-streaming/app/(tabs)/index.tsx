@@ -45,6 +45,13 @@ function TestAudioPlayerModule() {
         }}
       />
 
+      <Button
+        title="Play dummy audio with rn-audio-api"
+        onPress={() => {
+          playBase64AudioText(dummyBase64Text, 16000);
+        }}
+      />
+
       <View style={styles.buttonContainer}>
         <Button
           title="Play Dummy base64 Audio"
@@ -110,5 +117,39 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
 });
+
+const playBase64AudioText = async (base64: string, sampleRate: number) => {
+  const audioContext = new AudioContext();
+
+  // Convert base64 to raw PCM data
+  const arrayBuffer = base64AudioTextToArrayBuffer(base64);
+  const pcmData = new Int16Array(arrayBuffer);
+
+  // Create audio buffer with the specified sample rate
+  const audioBuffer = audioContext.createBuffer(1, pcmData.length, sampleRate);
+  const channelData = audioBuffer.getChannelData(0);
+
+  // Convert Int16 PCM data to Float32 for Web Audio API
+  for (let i = 0; i < pcmData.length; i++) {
+    channelData[i] = pcmData[i] / 32768.0; // Normalize 16-bit to -1.0 to 1.0
+  }
+
+  const playerNode = audioContext.createBufferSource();
+  playerNode.buffer = audioBuffer;
+
+  playerNode.connect(audioContext.destination);
+  playerNode.start(audioContext.currentTime);
+  playerNode.stop(audioContext.currentTime + audioBuffer.duration);
+};
+
+function base64AudioTextToArrayBuffer(base64: string) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
 
 export default TestAudioPlayerModule;
