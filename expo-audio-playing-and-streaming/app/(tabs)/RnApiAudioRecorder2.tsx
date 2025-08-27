@@ -1,16 +1,10 @@
-import { View, Text, Button, Alert } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
-import {
-  AudioRecorder,
-  RecorderAdapterNode,
-  AudioContext,
-} from "react-native-audio-api";
-import { requestRecordingPermissionsAsync } from "expo-audio";
 import { useAudioStreamer } from "@/hooks/useAudioStreamer";
+import React from "react";
+import { Button, Text, View } from "react-native";
 
 const RnApiAudioRecorder = () => {
   const { isRecording, startRecording, stopRecording, isInitialized } =
-    useAudioStreamer();
+    useAudioStreamer({ sampleRate: 16000, interval: 1000 });
 
   return (
     <View style={{ padding: 20 }}>

@@ -7,12 +7,33 @@ import {
 } from "react-native-audio-api";
 import { requestRecordingPermissionsAsync } from "expo-audio";
 
-const useAudioStreamer = () => {
+const useAudioStreamer = ({
+  sampleRate,
+  interval,
+}: {
+  // assuming that the sample rate will not change
+  sampleRate: number;
+  interval: number;
+}) => {
   const recorderRef = useRef<AudioRecorder | null>(null);
   const adapterRef = useRef<RecorderAdapterNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  const cleanup = useCallback(() => {
+    try {
+      if (recorderRef.current) {
+        recorderRef.current.stop();
+        recorderRef.current.disconnect();
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    } catch (error) {
+      console.error("Error during cleanup:", error);
+    }
+  }, []);
 
   const initializeAudio = useCallback(async () => {
     try {
@@ -33,8 +54,8 @@ const useAudioStreamer = () => {
 
       // Create recorder
       recorderRef.current = new AudioRecorder({
-        sampleRate: 16000,
-        bufferLengthInSamples: 16000,
+        sampleRate: sampleRate,
+        bufferLengthInSamples: sampleRate,
       });
 
       // Create adapter
@@ -63,7 +84,7 @@ const useAudioStreamer = () => {
       console.error("Failed to initialize audio:", error);
       Alert.alert("Error", "Failed to initialize audio recorder");
     }
-  }, []);
+  }, [sampleRate]);
 
   const startRecording = useCallback(() => {
     try {
@@ -93,20 +114,6 @@ const useAudioStreamer = () => {
     } catch (error) {
       console.error("Failed to stop recording:", error);
       Alert.alert("Error", "Failed to stop recording");
-    }
-  }, []);
-
-  const cleanup = useCallback(() => {
-    try {
-      if (recorderRef.current) {
-        recorderRef.current.stop();
-        recorderRef.current.disconnect();
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-    } catch (error) {
-      console.error("Error during cleanup:", error);
     }
   }, []);
 
