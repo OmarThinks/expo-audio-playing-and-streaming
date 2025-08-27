@@ -1,0 +1,27 @@
+{
+  "name": "audio-player",
+  "version": "1.0.0",
+  "description": "A native audio player module for React Native",
+  "main": "index.ts",
+  "keywords": ["react-native", "expo", "audio", "player"],
+  "repository": "https://github.com/expo/expo",
+  "author": "Your name <you@example.com>",
+  "license": "MIT",
+  "homepage": "https://docs.expo.dev/modules/",
+  "unimodulePlatforms": {
+    "android": {
+      "src": "android",
+      "package": "expo.modules.audioplayer"
+    },
+    "ios": {
+      "src": "ios"
+    },
+    "web": "src"
+  },
+  "peerDependencies": {
+    "expo": "*"
+  },
+  "devDependencies": {
+    "expo-module-scripts": "*"
+  }
+}
