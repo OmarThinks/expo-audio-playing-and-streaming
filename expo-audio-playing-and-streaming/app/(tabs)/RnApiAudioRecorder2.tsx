@@ -4,7 +4,7 @@ import { Button, Text, View } from "react-native";
 
 const RnApiAudioRecorder = () => {
   const { isRecording, startRecording, stopRecording, isInitialized } =
-    useAudioStreamer({ sampleRate: 16000, interval: 1000 });
+    useAudioStreamer({ sampleRate: 16000, interval: 250 });
 
   return (
     <View style={{ padding: 20 }}>
