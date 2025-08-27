@@ -1,5 +1,5 @@
 import { View, Text, Button, Alert } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   AudioRecorder,
   RecorderAdapterNode,
@@ -14,15 +14,7 @@ const useAudioStreamer = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  useEffect(() => {
-    initializeAudio();
-
-    return () => {
-      cleanup();
-    };
-  }, []);
-
-  const initializeAudio = async () => {
+  const initializeAudio = useCallback(async () => {
     try {
       console.log("Initializing audio...");
 
@@ -71,9 +63,9 @@ const useAudioStreamer = () => {
       console.error("Failed to initialize audio:", error);
       Alert.alert("Error", "Failed to initialize audio recorder");
     }
-  };
+  }, []);
 
-  const startRecording = () => {
+  const startRecording = useCallback(() => {
     try {
       if (!recorderRef.current || !isInitialized) {
         Alert.alert("Error", "Audio recorder not initialized");
@@ -87,9 +79,9 @@ const useAudioStreamer = () => {
       console.error("Failed to start recording:", error);
       Alert.alert("Error", "Failed to start recording");
     }
-  };
+  }, [isInitialized]);
 
-  const stopRecording = () => {
+  const stopRecording = useCallback(() => {
     try {
       if (!recorderRef.current) {
         return;
@@ -102,9 +94,9 @@ const useAudioStreamer = () => {
       console.error("Failed to stop recording:", error);
       Alert.alert("Error", "Failed to stop recording");
     }
-  };
+  }, []);
 
-  const cleanup = () => {
+  const cleanup = useCallback(() => {
     try {
       if (recorderRef.current) {
         recorderRef.current.stop();
@@ -116,7 +108,15 @@ const useAudioStreamer = () => {
     } catch (error) {
       console.error("Error during cleanup:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    initializeAudio();
+
+    return () => {
+      cleanup();
+    };
+  }, [cleanup, initializeAudio]);
 
   return {
     isRecording,
