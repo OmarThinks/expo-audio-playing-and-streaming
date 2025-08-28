@@ -3,8 +3,8 @@
 - separate the audio recorder hook, in the hooks folder ✅
 - Clean the second screen: Make it for audio recording only, and playing by merging pcm base64 ✅
 - remove the native module ✅
-- Adjust and recorder tabs
-- Create 3 new empty tabs, to learn on them, let them be in the last, call them 1,2, and 3
+- Adjust and recorder tabs ✅
+- Create 3 new empty tabs, to learn on them, let them be in the last, call them 1,2, and 3 ✅
 - Create a new hook to learn on it in learning 1
 - Document how audio playing hook works. And understand it.
 
