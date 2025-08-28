@@ -59,16 +59,11 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
     }
   }, []);
 
-  const startPlayingAudio = useCallback(() => {
-    audioBufferQueueRef.current?.start?.();
-  }, []);
-
   return {
     isAudioPlaying,
     enqueueAudioBufferQueue,
     stopPlayingAudio: resetState,
     playAudio,
-    startPlayingAudio,
   };
 };
 
