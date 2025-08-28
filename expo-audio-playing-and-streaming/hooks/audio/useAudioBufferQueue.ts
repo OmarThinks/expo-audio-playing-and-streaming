@@ -18,6 +18,7 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
     setIsAudioPlaying(false);
     lastBufferIdRef.current = "";
     try {
+      audioBufferQueueRef.current?.stop?.();
       audioBufferQueueRef.current?.clearBuffers?.();
       queueLengthRef.current = 0;
     } catch {}
