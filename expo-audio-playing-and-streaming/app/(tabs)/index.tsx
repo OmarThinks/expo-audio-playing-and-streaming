@@ -1,39 +1,35 @@
-import { useBase64AudioPlayer } from "@/hooks/useBase64AudioPlayer";
+import { useBase64PcmAudioPlayer } from "@/audioHooks/useBase64PcmAudioPlayer";
 import { dummyBase64Text } from "@/samples/dummyBase64Text";
 import React from "react";
 import { Button, Text, View } from "react-native";
 
-function Example() {
-  const { isAudioPlaying, playAudio, stopPlayingAudio } =
-    useBase64AudioPlayer();
+const Learn1 = () => {
+  const { isAudioPlaying, playPcmBase64Audio, stopPlayingAudio } =
+    useBase64PcmAudioPlayer({ sampleRate: 16000 });
 
   return (
     <View
       style={{
-        alignSelf: "stretch",
         flex: 1,
-        padding: 16,
         justifyContent: "center",
-        alignItems: "stretch",
-        gap: 16,
+        alignItems: "center",
+        alignSelf: "stretch",
+        padding: 16,
       }}
     >
-      <Text style={{ fontSize: 32, fontWeight: "semibold" }}>
-        Is Playing: {`${isAudioPlaying}`}
-      </Text>
-
-      {!isAudioPlaying ? (
-        <Button
-          title="Play Audio"
-          onPress={() => {
-            playAudio({ base64Text: dummyBase64Text, sampleRate: 16000 });
-          }}
-        />
-      ) : (
-        <Button title="Stop Playing Audio" onPress={stopPlayingAudio} />
-      )}
+      <Text>Is Audio Playing: {`${isAudioPlaying}`}</Text>
+      <Button
+        title={isAudioPlaying ? "Stop" : "Play"}
+        onPress={
+          isAudioPlaying
+            ? stopPlayingAudio
+            : () => {
+                playPcmBase64Audio({ base64String: dummyBase64Text });
+              }
+        }
+      />
     </View>
   );
-}
+};
 
-export default Example;
+export default Learn1;
