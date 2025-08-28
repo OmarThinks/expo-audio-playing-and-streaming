@@ -1,13 +1,21 @@
+import { useAudioBufferQueue } from "@/hooks/audio/useAudioBufferQueue";
 import { useAudioStreamer } from "@/hooks/audio/useAudioStreamer";
 import React, { useCallback, useState } from "react";
 import { Button, View } from "react-native";
 import { AudioBuffer, AudioContext } from "react-native-audio-api";
 
 const Learn1 = () => {
-  const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
+  //const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
+
+  const {
+    enqueueAudioBufferQueue,
+    isAudioPlaying,
+    playAudio,
+    stopPlayingAudio,
+  } = useAudioBufferQueue({ sampleRate: 16000 });
 
   const onAudioReady = useCallback((audioBuffer: AudioBuffer) => {
-    setAudioBuffers((prev) => [...prev, audioBuffer]);
+    //setAudioBuffers((prev) => [...prev, audioBuffer]);
   }, []);
 
   const { isRecording, startRecording, stopRecording } = useAudioStreamer({
@@ -15,18 +23,6 @@ const Learn1 = () => {
     interval: 250,
     onAudioReady,
   });
-
-  const playAudioBuffers = useCallback(() => {
-    const audioContext = new AudioContext({ sampleRate: 16000 });
-
-    const audioBufferQueue = audioContext.createBufferQueueSource();
-
-    for (const audioBuffer of audioBuffers) {
-      audioBufferQueue.enqueueBuffer(audioBuffer);
-    }
-    audioBufferQueue.connect(audioContext.destination);
-    audioBufferQueue.start(audioContext.currentTime);
-  }, [audioBuffers]);
 
   return (
     <View
@@ -43,9 +39,7 @@ const Learn1 = () => {
         onPress={isRecording ? stopRecording : startRecording}
       />
 
-      {audioBuffers.length > 0 && (
-        <Button title="Play Audio Buffers" onPress={playAudioBuffers} />
-      )}
+      <Button title="Play Audio Buffers" onPress={playAudio} />
     </View>
   );
 };

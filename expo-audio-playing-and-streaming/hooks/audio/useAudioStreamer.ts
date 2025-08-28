@@ -53,7 +53,6 @@ const useAudioStreamer = ({
 
       onAudioReady(buffer);
     });
-    console.log("I should start now");
     audioRecorder.start();
     setIsRecording(true);
 
