@@ -17,10 +17,16 @@ const RnApiAudioRecorder = () => {
 
   // Initialize audio context and queue source node
   useEffect(() => {
-    audioContextRef.current = new AudioContext();
+    // Create audio context with the same sample rate as recording (16kHz)
+    audioContextRef.current = new AudioContext({ sampleRate: 16000 });
     queueSourceNodeRef.current =
       audioContextRef.current.createBufferQueueSource();
     queueSourceNodeRef.current.connect(audioContextRef.current.destination);
+
+    console.log(
+      "Audio context created with sample rate:",
+      audioContextRef.current.sampleRate
+    );
 
     return () => {
       if (queueSourceNodeRef.current) {
@@ -35,11 +41,44 @@ const RnApiAudioRecorder = () => {
   const onAudioReady = useCallback((buffer: AudioBuffer) => {
     // Handle the audio buffer when it's ready
     console.log("Audio buffer is ready:", buffer);
+    console.log("Buffer sample rate:", buffer.sampleRate);
+    console.log(
+      "Audio context sample rate:",
+      audioContextRef.current?.sampleRate
+    );
 
-    // Queue the audio buffer directly instead of converting to base64
-    if (queueSourceNodeRef.current) {
-      const bufferId = queueSourceNodeRef.current.enqueueBuffer(buffer);
-      console.log("Buffer added to queue with ID:", bufferId);
+    // Queue the audio buffer directly - but we need to ensure sample rate consistency
+    if (queueSourceNodeRef.current && audioContextRef.current) {
+      // Check if the buffer sample rate matches the audio context
+      if (buffer.sampleRate !== audioContextRef.current.sampleRate) {
+        console.warn(
+          `Sample rate mismatch: buffer=${buffer.sampleRate}Hz, context=${audioContextRef.current.sampleRate}Hz`
+        );
+
+        // Create a new buffer with the correct sample rate
+        const correctBuffer = audioContextRef.current.createBuffer(
+          buffer.numberOfChannels,
+          buffer.length,
+          audioContextRef.current.sampleRate
+        );
+
+        // Copy the data from the original buffer
+        for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+          const sourceData = buffer.getChannelData(channel);
+          const targetData = correctBuffer.getChannelData(channel);
+          targetData.set(sourceData);
+        }
+
+        const bufferId =
+          queueSourceNodeRef.current.enqueueBuffer(correctBuffer);
+        console.log(
+          "Buffer added to queue with corrected sample rate, ID:",
+          bufferId
+        );
+      } else {
+        const bufferId = queueSourceNodeRef.current.enqueueBuffer(buffer);
+        console.log("Buffer added to queue with ID:", bufferId);
+      }
     }
 
     // Still keep base64 for display/debugging purposes if needed
