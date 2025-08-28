@@ -1,7 +1,7 @@
 - Clean the First screen. Make it for audio playing only ✅
 - separate the audio player hook, in the hooks folder ✅
 - separate the audio recorder hook, in the hooks folder ✅
-- Clean the second screen: Make it for audio recording only, and playing by merging pcm base64
+- Clean the second screen: Make it for audio recording only, and playing by merging pcm base64 ✅
 - remove the native module
 - Document how audio playing hook works. And understand it.
 - Document how the Audio recording hook works. And understand it.

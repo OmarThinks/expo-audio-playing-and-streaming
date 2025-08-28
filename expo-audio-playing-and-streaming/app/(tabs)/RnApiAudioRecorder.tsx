@@ -1,6 +1,5 @@
 import { useAudioStreamer } from "@/hooks/useAudioStreamer";
 import { useBase64AudioPlayer } from "@/hooks/useBase64AudioPlayer";
-import { useAudioStream } from "@/modules/audio-streamer";
 import { requestRecordingPermissionsAsync } from "expo-audio";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -119,13 +118,19 @@ function Example() {
     setStreamArray((prev) => [...prev, base64Audio]);
   }, []);
 
-  const onAudioReady = useCallback(
-    (buffer: AudioBuffer) => {
-      const channelData = buffer.getChannelData(0);
-      onStreamData(Array.from(channelData));
-    },
-    [onStreamData]
-  );
+  const onAudioReady = useCallback((buffer: AudioBuffer) => {
+    // Convert AudioBuffer to number array (same format as streaming module)
+    const data = audioBufferToNumberArray(buffer);
+
+    // Process the data the same way as streaming module data
+    const base64Audio = streamModuleAudioDataToBase64(data);
+    setVolume(calculateVolumeFromStreamingModuleData(data));
+
+    setAudioData(data.slice(0, 50).map(String)); // Convert numbers to strings for display
+    setLastDataReceived(new Date());
+    setDataCount((prev) => prev + 1);
+    setStreamArray((prev) => [...prev, base64Audio]);
+  }, []);
 
   const { isRecording, startRecording, stopRecording } = useAudioStreamer({
     interval: 250,
@@ -215,6 +220,43 @@ function Example() {
       </View>
     </View>
   );
+}
+
+function audioBufferToNumberArray(audioBuffer: AudioBuffer): number[] {
+  // Get the float32 channel data (values between -1.0 and 1.0)
+  const floatData = audioBuffer.getChannelData(0); // Get first channel
+
+  // Convert Float32Array to 16-bit PCM integers (similar to streaming module format)
+  const numberArray: number[] = [];
+  for (let i = 0; i < floatData.length; i++) {
+    // Clamp to [-1, 1] and convert to 16-bit integer
+    const sample = Math.max(-1, Math.min(1, floatData[i]));
+    const pcmValue = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+    numberArray.push(Math.round(pcmValue));
+  }
+
+  return numberArray;
+}
+
+function audioBufferToBase64PCM(audioBuffer: AudioBuffer): string {
+  // Get the float32 channel data (values between -1.0 and 1.0)
+  const floatData = audioBuffer.getChannelData(0); // Get first channel
+
+  // Convert Float32Array to 16-bit PCM
+  const pcmData = new Int16Array(floatData.length);
+  for (let i = 0; i < floatData.length; i++) {
+    // Clamp to [-1, 1] and convert to 16-bit integer
+    const sample = Math.max(-1, Math.min(1, floatData[i]));
+    pcmData[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+  }
+
+  // Convert to Uint8Array to get raw bytes
+  const buffer16 = new Uint8Array(pcmData.buffer);
+
+  // Convert to base64
+  const pcmBase64 = Buffer.from(buffer16).toString("base64");
+
+  return pcmBase64;
 }
 
 const styles = StyleSheet.create({

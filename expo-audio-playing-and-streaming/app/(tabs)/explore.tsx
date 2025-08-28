@@ -1,7 +1,7 @@
+import { useAudioStreamer } from "@/hooks/useAudioStreamer";
 import { useBase64AudioPlayer } from "@/hooks/useBase64AudioPlayer";
-import { useAudioStream } from "@/modules/audio-streamer";
 import { requestRecordingPermissionsAsync } from "expo-audio";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Button,
   ScrollView,
@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { AudioBuffer } from "react-native-audio-api";
 
 const streamModuleAudioDataToBase64 = (audioData: number[]): string => {
   // Convert to 16-bit PCM buffer
@@ -117,30 +118,43 @@ function Example() {
     setStreamArray((prev) => [...prev, base64Audio]);
   }, []);
 
-  const onStartStreaming = useCallback(() => {
-    console.log("Audio streaming started");
-    setDataCount(0);
-    setAudioData([]);
-    setStreamArray([]);
-  }, []);
-  const onStopStreaming = useCallback(() => {
-    setVolume(0);
+  const onAudioReady = useCallback((buffer: AudioBuffer) => {
+    // Convert AudioBuffer to number array (same format as streaming module)
+    const data = audioBufferToNumberArray(buffer);
+
+    // Process the data the same way as streaming module data
+    const base64Audio = streamModuleAudioDataToBase64(data);
+    setVolume(calculateVolumeFromStreamingModuleData(data));
+
+    setAudioData(data.slice(0, 50).map(String)); // Convert numbers to strings for display
+    setLastDataReceived(new Date());
+    setDataCount((prev) => prev + 1);
+    setStreamArray((prev) => [...prev, base64Audio]);
   }, []);
 
-  const { isStreaming, startStreaming, stopStreaming } = useAudioStream({
+  const { isRecording, startRecording, stopRecording } = useAudioStreamer({
     interval: 250,
     sampleRate: 16000,
-    onStreamData,
-    onStartStreaming,
-    onStopStreaming,
+    onAudioReady: onAudioReady, // TODO
   });
+
+  useEffect(() => {
+    if (isRecording) {
+      // Reset state when recording starts
+      setDataCount(0);
+      setAudioData([]);
+      setStreamArray([]);
+    } else {
+      setVolume(0);
+    }
+  }, [isRecording]);
 
   const handleStartStreaming = useCallback(async () => {
     try {
       const permissionResponse = await requestRecordingPermissionsAsync();
 
       if (permissionResponse.granted) {
-        await startStreaming();
+        startRecording();
       } else {
         console.error("Audio recording permission denied");
       }
@@ -150,14 +164,14 @@ function Example() {
         error instanceof Error ? error.message : "Unknown error";
       alert("Failed to start streaming: " + errorMessage);
     }
-  }, [startStreaming]);
+  }, [startRecording]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Audio Stream Test</Text>
       <View style={styles.statusContainer}>
         <Text style={styles.statusText}>
-          Status: {isStreaming ? "Streaming" : "Stopped"}
+          Status: {isRecording ? "Recording" : "Stopped"}
         </Text>
         <Text style={styles.statusText}>
           Data packets received: {dataCount}
@@ -171,19 +185,19 @@ function Example() {
         <Text style={styles.statusText}>Volume: {volume}</Text>
       </View>
       <View style={styles.buttonContainer}>
-        {!isStreaming ? (
+        {!isRecording ? (
           <TouchableOpacity
             style={[styles.button, styles.startButton]}
             onPress={handleStartStreaming}
-            disabled={isStreaming}
+            disabled={isRecording}
           >
             <Text style={styles.buttonText}>Start Streaming</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={[styles.button, styles.stopButton]}
-            onPress={stopStreaming}
-            disabled={!isStreaming}
+            onPress={stopRecording}
+            disabled={!isRecording}
           >
             <Text style={styles.buttonText}>Stop Streaming</Text>
           </TouchableOpacity>
@@ -206,6 +220,43 @@ function Example() {
       </View>
     </View>
   );
+}
+
+function audioBufferToNumberArray(audioBuffer: AudioBuffer): number[] {
+  // Get the float32 channel data (values between -1.0 and 1.0)
+  const floatData = audioBuffer.getChannelData(0); // Get first channel
+
+  // Convert Float32Array to 16-bit PCM integers (similar to streaming module format)
+  const numberArray: number[] = [];
+  for (let i = 0; i < floatData.length; i++) {
+    // Clamp to [-1, 1] and convert to 16-bit integer
+    const sample = Math.max(-1, Math.min(1, floatData[i]));
+    const pcmValue = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+    numberArray.push(Math.round(pcmValue));
+  }
+
+  return numberArray;
+}
+
+function audioBufferToBase64PCM(audioBuffer: AudioBuffer): string {
+  // Get the float32 channel data (values between -1.0 and 1.0)
+  const floatData = audioBuffer.getChannelData(0); // Get first channel
+
+  // Convert Float32Array to 16-bit PCM
+  const pcmData = new Int16Array(floatData.length);
+  for (let i = 0; i < floatData.length; i++) {
+    // Clamp to [-1, 1] and convert to 16-bit integer
+    const sample = Math.max(-1, Math.min(1, floatData[i]));
+    pcmData[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+  }
+
+  // Convert to Uint8Array to get raw bytes
+  const buffer16 = new Uint8Array(pcmData.buffer);
+
+  // Convert to base64
+  const pcmBase64 = Buffer.from(buffer16).toString("base64");
+
+  return pcmBase64;
 }
 
 const styles = StyleSheet.create({
