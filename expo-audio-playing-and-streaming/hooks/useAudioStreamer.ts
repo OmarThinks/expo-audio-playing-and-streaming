@@ -40,7 +40,7 @@ const useAudioStreamer = ({
 
   const initializeAudio = useCallback(async () => {
     try {
-      console.log("Initializing audio...");
+      //console.log("Initializing audio...");
 
       // Request audio recording permission
       const permissionResult = await requestRecordingPermissionsAsync();
@@ -70,21 +70,12 @@ const useAudioStreamer = ({
 
       // Set up audio ready callback
       recorderRef.current.onAudioReady((event) => {
-        const { buffer, numFrames, when } = event;
-        console.log(
-          "Audio recorder buffer ready:",
-          "Duration:",
-          buffer.duration,
-          "Frames:",
-          numFrames,
-          "When:",
-          when
-        );
+        const { buffer } = event;
         onAudioReady(buffer);
       });
 
       setIsInitialized(true);
-      console.log("Audio initialized successfully");
+      //console.log("Audio initialized successfully");
     } catch (error) {
       console.error("Failed to initialize audio:", error);
       Alert.alert("Error", "Failed to initialize audio recorder");
@@ -98,7 +89,7 @@ const useAudioStreamer = ({
         return;
       }
 
-      console.log("Starting recording...");
+      //console.log("Starting recording...");
       recorderRef.current.start();
       setIsRecording(true);
     } catch (error) {
@@ -113,7 +104,7 @@ const useAudioStreamer = ({
         return;
       }
 
-      console.log("Stopping recording...");
+      //console.log("Stopping recording...");
       recorderRef.current.stop();
       setIsRecording(false);
     } catch (error) {
