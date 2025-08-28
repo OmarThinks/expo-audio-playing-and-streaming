@@ -10,20 +10,18 @@ const useBase64PcmAudioPlayer = ({ sampleRate }: { sampleRate: number }) => {
 
   const cleanUp = useCallback(() => {
     setIsAudioPlaying(false);
+
     try {
       audioBufferSourceNodeRef.current?.stop?.();
     } catch {}
+    audioBufferSourceNodeRef.current = null;
   }, []);
 
   useEffect(() => {
     cleanUp();
 
     const audioContext = new AudioContext({ sampleRate });
-    const audioBufferSourceNode = audioContext.createBufferSource();
-    audioBufferSourceNode.connect(audioContext.destination);
-
     audioContextRef.current = audioContext;
-    audioBufferSourceNodeRef.current = audioBufferSourceNode;
 
     return () => {
       cleanUp();
@@ -32,19 +30,24 @@ const useBase64PcmAudioPlayer = ({ sampleRate }: { sampleRate: number }) => {
 
   const playPcmBase64Audio = useCallback(
     async ({ base64String }: { base64String: string }) => {
-      if (audioContextRef.current && audioBufferSourceNodeRef.current) {
+      if (audioContextRef.current) {
         const audioBuffer =
           await audioContextRef.current?.decodePCMInBase64Data(base64String);
 
-        audioBufferSourceNodeRef.current.buffer = audioBuffer;
+        const audioBufferSourceNode =
+          audioContextRef.current.createBufferSource();
+        audioBufferSourceNode.connect(audioContextRef.current.destination);
+
+        audioBufferSourceNode.buffer = audioBuffer;
         setIsAudioPlaying(true);
-        audioBufferSourceNodeRef.current.onEnded = () => {
-          setIsAudioPlaying(false);
+        audioBufferSourceNode.onEnded = () => {
+          cleanUp();
         };
-        audioBufferSourceNodeRef.current.start();
+        audioBufferSourceNode.start();
+        audioBufferSourceNodeRef.current = audioBufferSourceNode;
       }
     },
-    []
+    [cleanUp]
   );
 
   return { isAudioPlaying, playPcmBase64Audio, stopPlayingAudio: cleanUp };
