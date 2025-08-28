@@ -1,25 +1,37 @@
-import { View, Text, Button } from "react-native";
+import { View, Text, Button, Alert } from "react-native";
 import React, { useCallback, useEffect, useRef } from "react";
-import { AudioRecorder, AudioContext } from "react-native-audio-api";
+import {
+  AudioRecorder,
+  AudioContext,
+  RecorderAdapterNode,
+} from "react-native-audio-api";
+import { requestRecordingPermissionsAsync } from "expo-audio";
 
 const Learn1 = () => {
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const audiorecorderRef = useRef<AudioRecorder | null>(null);
+  //const audioContextRef = useRef<AudioContext | null>(null);
+  //const audiorecorderRef = useRef<AudioRecorder | null>(null);
 
-  const startRecording = useCallback(() => {
+  const startRecording = useCallback(async () => {
+    const permissionResult = await requestRecordingPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert("Permission Error", "Audio recording permission is required");
+      return;
+    }
+
     const audioContext = new AudioContext({ sampleRate: 16000 });
     const audioRecorder = new AudioRecorder({
       sampleRate: 16000,
       bufferLengthInSamples: 16000,
     });
 
-    const adapterNode = audioContext.createRecorderAdapter();
+    const recorderAdapterNode = audioContext.createRecorderAdapter();
 
-    adapterNode.connect(audioContext.destination);
+    recorderAdapterNode.connect(audioContext.destination);
 
-    audioRecorder.connect(adapterNode);
+    audioRecorder.connect(recorderAdapterNode);
 
     audioRecorder.onAudioReady((event) => {
+      console.log("Hi");
       const { buffer, numFrames, when } = event;
 
       console.log(
@@ -29,7 +41,9 @@ const Learn1 = () => {
         when
       );
     });
+    console.log("I should start now");
     audioRecorder.start();
+    //audioRecorder.
   }, []);
 
   return (
