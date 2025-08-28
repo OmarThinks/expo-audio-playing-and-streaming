@@ -1,4 +1,4 @@
-import { useBase64PcmAudioPlayer } from "@/audioHooks/useBase64PcmAudioPlayer";
+import { useBase64PcmAudioPlayer } from "@/hooks/audio/useBase64PcmAudioPlayer";
 import { dummyBase64Text } from "@/samples/dummyBase64Text";
 import React from "react";
 import { Button, Text, View } from "react-native";

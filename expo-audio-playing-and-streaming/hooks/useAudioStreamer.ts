@@ -38,10 +38,6 @@ const useAudioStreamer = ({
     }
   }, []);
 
-  useEffect(() => {
-    return cleanup;
-  }, [cleanup]);
-
   const initializeAudio = useCallback(async () => {
     try {
       console.log("Initializing audio...");
