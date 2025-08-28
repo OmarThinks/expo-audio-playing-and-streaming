@@ -1,10 +1,9 @@
-import { View, Text, Button } from "react-native";
 import React, { useRef } from "react";
+import { Button, Text, View } from "react-native";
 import {
+  AudioContext,
   AudioRecorder,
   RecorderAdapterNode,
-  AudioContext,
-  AudioBuffer,
 } from "react-native-audio-api";
 
 const RnApiAudioRecorder = () => {

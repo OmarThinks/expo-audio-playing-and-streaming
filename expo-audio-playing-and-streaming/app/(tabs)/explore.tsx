@@ -1,15 +1,15 @@
+import { useBase64AudioPlayer } from "@/hooks/useBase64AudioPlayer";
 import { useAudioStream } from "@/modules/audio-streamer";
+import { requestRecordingPermissionsAsync } from "expo-audio";
 import React, { useCallback, useState } from "react";
 import {
   Button,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  StyleSheet,
-  ScrollView,
 } from "react-native";
-import { useBase64AudioPlayer } from ".";
-import { requestRecordingPermissionsAsync } from "expo-audio";
 
 const streamModuleAudioDataToBase64 = (audioData: number[]): string => {
   // Convert to 16-bit PCM buffer
