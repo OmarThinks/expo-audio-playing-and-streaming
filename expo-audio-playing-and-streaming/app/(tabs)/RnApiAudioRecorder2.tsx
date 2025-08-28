@@ -59,11 +59,25 @@ const RnApiAudioRecorder = () => {
   const _startRecording = () => {
     if (isInitialized) {
       setMessages([]);
-      // Clear any existing buffers in the queue
-      console.log(queueSourceNodeRef.current);
-      if (queueSourceNodeRef.current) {
-        queueSourceNodeRef.current.clearBuffers();
-        console.log("Cleared audio buffer queue");
+      // Recreate the queue source node to ensure it's fresh
+      console.log("Current queue node:", queueSourceNodeRef.current);
+      if (audioContextRef.current) {
+        try {
+          // Disconnect the old node if it exists
+          if (queueSourceNodeRef.current) {
+            queueSourceNodeRef.current.disconnect();
+          }
+
+          // Create a new queue source node
+          queueSourceNodeRef.current =
+            audioContextRef.current.createBufferQueueSource();
+          queueSourceNodeRef.current.connect(
+            audioContextRef.current.destination
+          );
+          console.log("Created new audio buffer queue");
+        } catch (error) {
+          console.error("Error recreating queue source node:", error);
+        }
       }
       startRecording();
     }
