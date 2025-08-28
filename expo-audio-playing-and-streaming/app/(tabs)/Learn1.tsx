@@ -12,11 +12,17 @@ const Learn1 = () => {
     isAudioPlaying,
     playAudio,
     stopPlayingAudio,
+    logState,
   } = useAudioBufferQueue({ sampleRate: 16000 });
 
-  const onAudioReady = useCallback((audioBuffer: AudioBuffer) => {
-    //setAudioBuffers((prev) => [...prev, audioBuffer]);
-  }, []);
+  const onAudioReady = useCallback(
+    (audioBuffer: AudioBuffer) => {
+      //console.log(audioBuffer);
+      //setAudioBuffers((prev) => [...prev, audioBuffer]);
+      enqueueAudioBufferQueue(audioBuffer);
+    },
+    [enqueueAudioBufferQueue]
+  );
 
   const { isRecording, startRecording, stopRecording } = useAudioStreamer({
     sampleRate: 16000,
@@ -39,7 +45,12 @@ const Learn1 = () => {
         onPress={isRecording ? stopRecording : startRecording}
       />
 
-      <Button title="Play Audio Buffers" onPress={playAudio} />
+      {isAudioPlaying ? (
+        <Button title="Stop" onPress={stopPlayingAudio} />
+      ) : (
+        <Button title="Play Audio Buffers" onPress={playAudio} />
+      )}
+      <Button title="Log State" onPress={logState} />
     </View>
   );
 };
