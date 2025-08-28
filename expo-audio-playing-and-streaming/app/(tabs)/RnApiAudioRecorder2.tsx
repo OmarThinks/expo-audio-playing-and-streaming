@@ -7,6 +7,7 @@ import {
   AudioContext,
   AudioBufferQueueSourceNode,
 } from "react-native-audio-api";
+import { useBase64AudioPlayer } from ".";
 
 const RnApiAudioRecorder = () => {
   const [messages, setMessages] = useState<string[]>([]);
@@ -126,6 +127,7 @@ const RnApiAudioRecorder = () => {
       }
     }
   };
+  const { playAudio } = useBase64AudioPlayer();
 
   return (
     <View style={{ padding: 20 }}>
@@ -151,8 +153,65 @@ const RnApiAudioRecorder = () => {
         onPress={isPlaying ? stopQueuedAudio : playQueuedAudio}
         disabled={messages.length === 0}
       />
+
+      <Button
+        title="Play Messages"
+        onPress={() => {
+          const mergedAudio = mergePCMBase64Strings(messages);
+          playAudio({ base64Text: mergedAudio, sampleRate: 16000 });
+        }}
+      />
     </View>
   );
 };
+
+function mergePCMBase64Strings(pcmBase64List: string[]): string {
+  if (pcmBase64List.length === 0) {
+    return "";
+  }
+
+  if (pcmBase64List.length === 1) {
+    return pcmBase64List[0];
+  }
+
+  // Convert all base64 strings to binary data
+  const binaryDataArrays: Uint8Array[] = pcmBase64List.map((base64String) => {
+    // Remove any data URL prefix if present (e.g., "data:audio/pcm;base64,")
+    const cleanBase64 = base64String.replace(/^data:.*?;base64,/, "");
+
+    // Decode base64 to binary
+    const binaryString = atob(cleanBase64);
+    const bytes = new Uint8Array(binaryString.length);
+
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    return bytes;
+  });
+
+  // Calculate total length
+  const totalLength = binaryDataArrays.reduce(
+    (sum, array) => sum + array.length,
+    0
+  );
+
+  // Create merged array
+  const mergedArray = new Uint8Array(totalLength);
+  let offset = 0;
+
+  for (const array of binaryDataArrays) {
+    mergedArray.set(array, offset);
+    offset += array.length;
+  }
+
+  // Convert back to base64
+  let binaryString = "";
+  for (let i = 0; i < mergedArray.length; i++) {
+    binaryString += String.fromCharCode(mergedArray[i]);
+  }
+
+  return btoa(binaryString);
+}
 
 export default RnApiAudioRecorder;
