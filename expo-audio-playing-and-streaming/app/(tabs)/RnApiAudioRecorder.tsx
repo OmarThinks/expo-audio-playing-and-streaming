@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { AudioBuffer } from "react-native-audio-api";
 
 const streamModuleAudioDataToBase64 = (audioData: number[]): string => {
   // Convert to 16-bit PCM buffer
@@ -118,10 +119,18 @@ function Example() {
     setStreamArray((prev) => [...prev, base64Audio]);
   }, []);
 
+  const onAudioReady = useCallback(
+    (buffer: AudioBuffer) => {
+      const channelData = buffer.getChannelData(0);
+      onStreamData(Array.from(channelData));
+    },
+    [onStreamData]
+  );
+
   const { isRecording, startRecording, stopRecording } = useAudioStreamer({
     interval: 250,
     sampleRate: 16000,
-    onAudioReady: onStreamData,
+    onAudioReady: onAudioReady, // TODO
   });
 
   useEffect(() => {
@@ -140,7 +149,7 @@ function Example() {
       const permissionResponse = await requestRecordingPermissionsAsync();
 
       if (permissionResponse.granted) {
-        await startRecording;
+        startRecording();
       } else {
         console.error("Audio recording permission denied");
       }
