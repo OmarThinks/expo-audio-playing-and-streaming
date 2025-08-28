@@ -1,5 +1,5 @@
 import { useBase64AudioPlayer } from "@/hooks/useBase64AudioPlayer";
-import { useAudioStream as useAudioStreamModule } from "@/modules/audio-streamer";
+import { useAudioStream } from "@/modules/audio-streamer";
 import { requestRecordingPermissionsAsync } from "expo-audio";
 import React, { useCallback, useState } from "react";
 import {
@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useAudioStreamer } from "@/hooks/useAudioStreamer";
 
 const streamModuleAudioDataToBase64 = (audioData: number[]): string => {
   // Convert to 16-bit PCM buffer
@@ -108,7 +107,7 @@ function Example() {
     playAudio({ base64Text: mergedAudio, sampleRate: 16000 });
   }, [playAudio, streamArray]);
 
-  const onModuleStreamData = useCallback((data: number[]) => {
+  const onStreamData = useCallback((data: number[]) => {
     const base64Audio = streamModuleAudioDataToBase64(data);
     setVolume(calculateVolumeFromStreamingModuleData(data));
 
@@ -118,26 +117,22 @@ function Example() {
     setStreamArray((prev) => [...prev, base64Audio]);
   }, []);
 
-  const onModuleStartStreaming = useCallback(() => {
+  const onStartStreaming = useCallback(() => {
     console.log("Audio streaming started");
     setDataCount(0);
     setAudioData([]);
     setStreamArray([]);
   }, []);
-  const onModuleStopStreaming = useCallback(() => {
+  const onStopStreaming = useCallback(() => {
     setVolume(0);
   }, []);
 
-  const {
-    isStreaming: isModuleStreaming,
-    startStreaming: startModuleStreaming,
-    stopStreaming: stopModuleStreaming,
-  } = useAudioStreamModule({
+  const { isStreaming, startStreaming, stopStreaming } = useAudioStream({
     interval: 250,
     sampleRate: 16000,
-    onStreamData: onModuleStreamData,
-    onStartStreaming: onModuleStartStreaming,
-    onStopStreaming: onModuleStopStreaming,
+    onStreamData,
+    onStartStreaming,
+    onStopStreaming,
   });
 
   const handleStartStreaming = useCallback(async () => {
@@ -145,7 +140,7 @@ function Example() {
       const permissionResponse = await requestRecordingPermissionsAsync();
 
       if (permissionResponse.granted) {
-        await startModuleStreaming();
+        await startStreaming();
       } else {
         console.error("Audio recording permission denied");
       }
@@ -155,14 +150,14 @@ function Example() {
         error instanceof Error ? error.message : "Unknown error";
       alert("Failed to start streaming: " + errorMessage);
     }
-  }, [startModuleStreaming]);
+  }, [startStreaming]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Audio Stream Test</Text>
       <View style={styles.statusContainer}>
         <Text style={styles.statusText}>
-          Status: {isModuleStreaming ? "Streaming" : "Stopped"}
+          Status: {isStreaming ? "Streaming" : "Stopped"}
         </Text>
         <Text style={styles.statusText}>
           Data packets received: {dataCount}
@@ -176,19 +171,19 @@ function Example() {
         <Text style={styles.statusText}>Volume: {volume}</Text>
       </View>
       <View style={styles.buttonContainer}>
-        {!isModuleStreaming ? (
+        {!isStreaming ? (
           <TouchableOpacity
             style={[styles.button, styles.startButton]}
             onPress={handleStartStreaming}
-            disabled={isModuleStreaming}
+            disabled={isStreaming}
           >
             <Text style={styles.buttonText}>Start Streaming</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={[styles.button, styles.stopButton]}
-            onPress={stopModuleStreaming}
-            disabled={!isModuleStreaming}
+            onPress={stopStreaming}
+            disabled={!isStreaming}
           >
             <Text style={styles.buttonText}>Stop Streaming</Text>
           </TouchableOpacity>
