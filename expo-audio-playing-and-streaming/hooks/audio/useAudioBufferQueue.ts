@@ -14,7 +14,9 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
   const lastBufferIdRef = useRef("");
 
   const resetState = useCallback(() => {
+    console.log("reset is triggered");
     setIsAudioPlaying(false);
+    lastBufferIdRef.current = "";
     try {
       audioBufferQueueRef.current?.clearBuffers?.();
       queueLengthRef.current = 0;
@@ -35,37 +37,29 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
 
   const playAudio = useCallback(() => {
     if (audioBufferQueueRef.current) {
-      console.log(
-        "Number of inputs and outputs: ",
-        audioBufferQueueRef.current.numberOfInputs,
-        audioBufferQueueRef.current.numberOfOutputs
-      );
-
       audioBufferQueueRef.current.start();
       setIsAudioPlaying(true);
       audioBufferQueueRef.current.onEnded = (event) => {
+        console.log("onEnded", event);
         const { bufferId } = event;
         if (bufferId === lastBufferIdRef.current) {
-          setIsAudioPlaying(false);
+          resetState();
         }
       };
     }
-  }, []);
+  }, [resetState]);
 
   const enqueueAudioBufferQueue = useCallback((audioBuffer: AudioBuffer) => {
     queueLengthRef.current += 1;
     const bufferId = audioBufferQueueRef.current?.enqueueBuffer(audioBuffer);
+    console.log("enqueuedBufferId", bufferId);
     if (bufferId) {
       lastBufferIdRef.current = bufferId;
     }
   }, []);
 
-  const logState = useCallback(() => {
-    console.log(
-      JSON.stringify(audioBufferQueueRef.current),
-      audioBufferQueueRef.current?.numberOfInputs,
-      audioBufferQueueRef.current?.numberOfOutputs
-    );
+  const startPlayingAudio = useCallback(() => {
+    audioBufferQueueRef.current?.start?.();
   }, []);
 
   return {
@@ -73,7 +67,7 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
     enqueueAudioBufferQueue,
     stopPlayingAudio: resetState,
     playAudio,
-    logState,
+    startPlayingAudio,
   };
 };
 
