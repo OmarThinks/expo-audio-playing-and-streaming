@@ -1,6 +1,4 @@
-import { useAudioStreamer } from "@/hooks/audio/useAudioStreamer";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Button, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AudioBuffer,
   AudioBufferQueueSourceNode,
@@ -11,11 +9,15 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioBufferQueueRef = useRef<AudioBufferQueueSourceNode | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const queueLengthRef = useRef(0);
+
+  const lastBufferIdRef = useRef("");
 
   const resetState = useCallback(() => {
     setIsAudioPlaying(false);
     try {
       audioBufferQueueRef.current?.clearBuffers?.();
+      queueLengthRef.current = 0;
     } catch {}
   }, []);
 
@@ -41,14 +43,21 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
 
       audioBufferQueueRef.current.start();
       setIsAudioPlaying(true);
-      audioBufferQueueRef.current.onEnded = () => {
-        //resetState();
+      audioBufferQueueRef.current.onEnded = (event) => {
+        const { bufferId } = event;
+        if (bufferId === lastBufferIdRef.current) {
+          setIsAudioPlaying(false);
+        }
       };
     }
   }, []);
 
   const enqueueAudioBufferQueue = useCallback((audioBuffer: AudioBuffer) => {
-    audioBufferQueueRef.current?.enqueueBuffer(audioBuffer);
+    queueLengthRef.current += 1;
+    const bufferId = audioBufferQueueRef.current?.enqueueBuffer(audioBuffer);
+    if (bufferId) {
+      lastBufferIdRef.current = bufferId;
+    }
   }, []);
 
   const logState = useCallback(() => {

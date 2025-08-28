@@ -1,7 +1,7 @@
 import { useAudioBufferQueue } from "@/hooks/audio/useAudioBufferQueue";
 import { useAudioStreamer } from "@/hooks/audio/useAudioStreamer";
 import React, { useCallback, useState } from "react";
-import { Button, View } from "react-native";
+import { Button, View, Text } from "react-native";
 import { AudioBuffer, AudioContext } from "react-native-audio-api";
 
 const Learn1 = () => {
@@ -26,7 +26,7 @@ const Learn1 = () => {
 
   const { isRecording, startRecording, stopRecording } = useAudioStreamer({
     sampleRate: 16000,
-    interval: 250,
+    interval: 1000,
     onAudioReady,
   });
 
@@ -51,6 +51,8 @@ const Learn1 = () => {
         <Button title="Play Audio Buffers" onPress={playAudio} />
       )}
       <Button title="Log State" onPress={logState} />
+
+      <Text>Is Audio Playing: {isAudioPlaying ? "True" : "False"}</Text>
     </View>
   );
 };
