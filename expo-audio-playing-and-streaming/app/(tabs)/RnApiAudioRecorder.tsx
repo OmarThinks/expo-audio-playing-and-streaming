@@ -1,7 +1,8 @@
+import { useAudioStreamer } from "@/hooks/useAudioStreamer";
 import { useBase64AudioPlayer } from "@/hooks/useBase64AudioPlayer";
 import { useAudioStream } from "@/modules/audio-streamer";
 import { requestRecordingPermissionsAsync } from "expo-audio";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Button,
   ScrollView,
@@ -117,30 +118,29 @@ function Example() {
     setStreamArray((prev) => [...prev, base64Audio]);
   }, []);
 
-  const onStartStreaming = useCallback(() => {
-    console.log("Audio streaming started");
-    setDataCount(0);
-    setAudioData([]);
-    setStreamArray([]);
-  }, []);
-  const onStopStreaming = useCallback(() => {
-    setVolume(0);
-  }, []);
-
-  const { isStreaming, startStreaming, stopStreaming } = useAudioStream({
+  const { isRecording, startRecording, stopRecording } = useAudioStreamer({
     interval: 250,
     sampleRate: 16000,
-    onStreamData,
-    onStartStreaming,
-    onStopStreaming,
+    onAudioReady: onStreamData,
   });
+
+  useEffect(() => {
+    if (isRecording) {
+      // Reset state when recording starts
+      setDataCount(0);
+      setAudioData([]);
+      setStreamArray([]);
+    } else {
+      setVolume(0);
+    }
+  }, [isRecording]);
 
   const handleStartStreaming = useCallback(async () => {
     try {
       const permissionResponse = await requestRecordingPermissionsAsync();
 
       if (permissionResponse.granted) {
-        await startStreaming();
+        await startRecording;
       } else {
         console.error("Audio recording permission denied");
       }
@@ -150,14 +150,14 @@ function Example() {
         error instanceof Error ? error.message : "Unknown error";
       alert("Failed to start streaming: " + errorMessage);
     }
-  }, [startStreaming]);
+  }, [startRecording]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Audio Stream Test</Text>
       <View style={styles.statusContainer}>
         <Text style={styles.statusText}>
-          Status: {isStreaming ? "Streaming" : "Stopped"}
+          Status: {isRecording ? "Recording" : "Stopped"}
         </Text>
         <Text style={styles.statusText}>
           Data packets received: {dataCount}
@@ -171,19 +171,19 @@ function Example() {
         <Text style={styles.statusText}>Volume: {volume}</Text>
       </View>
       <View style={styles.buttonContainer}>
-        {!isStreaming ? (
+        {!isRecording ? (
           <TouchableOpacity
             style={[styles.button, styles.startButton]}
             onPress={handleStartStreaming}
-            disabled={isStreaming}
+            disabled={isRecording}
           >
             <Text style={styles.buttonText}>Start Streaming</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={[styles.button, styles.stopButton]}
-            onPress={stopStreaming}
-            disabled={!isStreaming}
+            onPress={stopRecording}
+            disabled={!isRecording}
           >
             <Text style={styles.buttonText}>Stop Streaming</Text>
           </TouchableOpacity>
