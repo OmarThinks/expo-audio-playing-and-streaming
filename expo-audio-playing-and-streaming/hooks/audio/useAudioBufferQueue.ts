@@ -9,8 +9,6 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioBufferQueueRef = useRef<AudioBufferQueueSourceNode | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-  const queueLengthRef = useRef(0);
-
   const lastBufferIdRef = useRef("");
 
   const resetState = useCallback(() => {
@@ -20,7 +18,6 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
     try {
       audioBufferQueueRef.current?.stop?.();
       audioBufferQueueRef.current?.clearBuffers?.();
-      queueLengthRef.current = 0;
     } catch {}
   }, []);
 
@@ -51,7 +48,6 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
   }, [resetState]);
 
   const enqueueAudioBufferQueue = useCallback((audioBuffer: AudioBuffer) => {
-    queueLengthRef.current += 1;
     const bufferId = audioBufferQueueRef.current?.enqueueBuffer(audioBuffer);
     console.log("enqueuedBufferId", bufferId);
     if (bufferId) {
